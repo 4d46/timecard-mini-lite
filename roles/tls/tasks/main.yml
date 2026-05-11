@@ -1,0 +1,48 @@
+---
+- name: Create NTPsec SSL directory
+  ansible.builtin.file:
+    path: "{{ ntpsec_ssl_dir }}"
+    state: directory
+    owner: root
+    group: ntpsec
+    mode: "0750"
+
+- name: Write Gandi LiveDNS credentials file
+  ansible.builtin.copy:
+    content: "dns_gandi_token={{ vault_gandi_token }}\n"
+    dest: "{{ certbot_gandi_ini }}"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Check if certificate already exists
+  ansible.builtin.stat:
+    path: "{{ certbot_cert_dir }}/fullchain.pem"
+  register: cert_stat
+
+- name: Issue Let's Encrypt certificate via Gandi DNS-01
+  ansible.builtin.command: >
+    certbot certonly
+    --authenticator dns-gandi
+    --dns-gandi-credentials {{ certbot_gandi_ini }}
+    --email {{ vault_acme_email }}
+    --agree-tos
+    --non-interactive
+    -d {{ hostname_fqdn }}
+  when: not cert_stat.stat.exists
+  no_log: true
+  register: certbot_result
+
+- name: Deploy certbot renewal hook for NTPsec
+  ansible.builtin.template:
+    src: ntpsec-nts.j2
+    dest: /etc/letsencrypt/renewal-hooks/deploy/ntpsec-nts
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Run deploy hook to copy initial certificates
+  ansible.builtin.command: /etc/letsencrypt/renewal-hooks/deploy/ntpsec-nts
+  when: not cert_stat.stat.exists or (certbot_result is defined and certbot_result.changed)
+  notify: Restart ntpsec

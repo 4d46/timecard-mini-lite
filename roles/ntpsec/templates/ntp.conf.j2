@@ -1,0 +1,35 @@
+# Managed by Ansible — do not edit manually
+# timecard-mini-lite: NTPsec configuration for {{ hostname_fqdn }}
+
+driftfile /var/lib/ntpsec/ntp.drift
+leapfile /usr/share/zoneinfo/leap-seconds.list
+
+{% if nts_enabled %}
+# NTS (Network Time Security) — authenticated NTP on port {{ nts_port }}
+# NTS clients must connect using the FQDN ({{ hostname_fqdn }}), not the IP address.
+nts cert {{ ntpsec_ssl_dir }}/fullchain.pem
+nts key  {{ ntpsec_ssl_dir }}/privkey.pem
+nts enable
+{% else %}
+# NTS certificates not yet deployed — NTS disabled on this run.
+# Run the playbook again after the tls role has issued the certificate.
+{% endif %}
+
+# Local system clock as Stratum 1 GPS reference.
+# TimeBeat disciplines this clock from the Mini HAT Essential's GPS/PPS at nanosecond accuracy.
+server 127.127.1.0 prefer
+fudge  127.127.1.0 stratum 1 refid GPS
+
+# Allow local clock to work as the sole authoritative source
+tos minclock 1 minsane 1
+
+# Fallback: UK National Physical Laboratory — UTC(NPL), independent of GPS
+{% for server in ntp_fallback_servers %}
+server {{ server }} iburst
+{% endfor %}
+
+# Access control
+restrict default kod nomodify nopeer noquery limited
+restrict {{ ntp_allowed_network }} mask {{ ntp_allowed_netmask }} nomodify nopeer
+restrict 127.0.0.1
+restrict ::1

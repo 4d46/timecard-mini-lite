@@ -1,0 +1,28 @@
+---
+- name: Configure CM4 timeserver
+  hosts: timeservers
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure Python3 is available (bootstrap)
+      ansible.builtin.raw: >
+        test -e /usr/bin/python3 ||
+        (apt-get update -qq && apt-get install -y -qq python3)
+      changed_when: false
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  roles:
+    - base
+    - network
+    - boot_config
+    - tls
+    - ntpsec
+    - firewall
+    - timebeat
+
+  post_tasks:
+    - name: Flush all handlers
+      ansible.builtin.meta: flush_handlers

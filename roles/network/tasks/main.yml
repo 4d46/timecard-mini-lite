@@ -1,0 +1,27 @@
+---
+- name: Ensure NetworkManager is installed
+  ansible.builtin.apt:
+    name: network-manager
+    state: present
+
+- name: Configure eth0 DHCP via NetworkManager
+  community.general.nmcli:
+    conn_name: eth0
+    ifname: "{{ network_interface }}"
+    type: ethernet
+    method4: auto
+    method6: auto
+    state: present
+  notify: Restart NetworkManager
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname_short }}"
+
+- name: Configure /etc/hosts
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"

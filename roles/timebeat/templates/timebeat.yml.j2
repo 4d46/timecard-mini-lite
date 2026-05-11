@@ -1,0 +1,76 @@
+# Managed by Ansible — do not edit manually
+# timecard-mini-lite: TimeBeat {{ timebeat_version }} for {{ hostname_fqdn }}
+#
+# Upgrading: update timebeat_version + timebeat_deb_checksum in vars.yml.
+# This template only configures the features in use — see the reference config at
+# /usr/share/timebeat/ or the installed default for the full options reference.
+
+timebeat:
+
+  license.keyfile: '{{ timebeat_license_path }}'
+  config.peerids: '/etc/timebeat/peerids.json'
+
+  clock_sync:
+
+    adjust_clock: true
+    step_limit: 15m
+
+    primary_clocks:
+
+      # PPS via eth0 NIC hardware timestamping (TimeBeat Mini HAT Essential)
+      # The HAT routes the GNSS PPS signal through the PHC on eth0.
+      - protocol:      pps
+        interface:     {{ network_interface }}
+        pin:           0
+        index:         0
+        linked_device: '{{ timebeat_gnss_device }}'
+        monitor_only:  false
+
+      # PTP grandmaster — serves PTPv2 multicast on domain 0 via eth0.
+      # server_only prevents nimrod from ever following another PTP master.
+      - protocol:                 ptp
+        domain:                   0
+        serve_multicast:          true
+        server_only:              true
+        announce_interval:        1
+        sync_interval:            0
+        delayrequest_interval:    0
+        interface:                {{ network_interface }}
+
+    secondary_clocks:
+
+      # TimeBeat Mini HAT Essential — u-blox MAX-F10S GNSS (provides major time for PPS)
+      - protocol:     timebeat_opentimecard_mini
+        device:       '{{ timebeat_gnss_device }}'
+        baud:         {{ timebeat_gnss_baud }}
+        card_config:  ['gnss:signal:gps+glonass+galileo']
+        offset:       {{ timebeat_gnss_offset }}
+        atomic:       false
+        monitor_only: false
+
+    advanced:
+      interference_monitor:
+        backoff_timer: 5m
+      ptp_tuning:
+        clock_quality:
+
+# Logging
+logging.to_files: true
+logging.files:
+  path: /var/log/timebeat
+  name: timebeat
+  rotateeverybytes: 10485760
+  keepfiles: 7
+  permissions: 0600
+
+seccomp.enabled: false
+
+# Dashboards and ILM require Elasticsearch — disabled for standalone timeserver use
+setup.dashboards.enabled: false
+setup.ilm.enabled: false
+
+# Metrics output: configure hosts if using ELK stack; connection errors are benign otherwise
+output.elasticsearch:
+  hosts: ['localhost:9200']
+
+monitoring.enabled: false

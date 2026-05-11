@@ -1,0 +1,5 @@
+---
+- name: Restart timebeat
+  ansible.builtin.systemd:
+    name: timebeat
+    state: restarted

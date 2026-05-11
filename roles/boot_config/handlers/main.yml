@@ -1,0 +1,5 @@
+---
+- name: Reboot host
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+    msg: "Rebooting due to boot configuration change"

@@ -1,0 +1,32 @@
+---
+- name: Ensure NTPsec SSL directory exists
+  ansible.builtin.file:
+    path: "{{ ntpsec_ssl_dir }}"
+    state: directory
+    owner: root
+    group: ntpsec
+    mode: "0750"
+
+- name: Check if NTS certificates are in place
+  ansible.builtin.stat:
+    path: "{{ ntpsec_ssl_dir }}/fullchain.pem"
+  register: nts_cert_stat
+
+- name: Deploy ntp.conf
+  ansible.builtin.template:
+    src: ntp.conf.j2
+    dest: /etc/ntpsec/ntp.conf
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  vars:
+    nts_enabled: "{{ nts_cert_stat.stat.exists }}"
+  notify: Restart ntpsec
+
+- name: Enable and start ntpsec
+  ansible.builtin.systemd:
+    name: ntpsec
+    enabled: true
+    state: started
+    daemon_reload: true

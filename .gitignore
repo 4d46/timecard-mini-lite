@@ -1,0 +1,8 @@
+inventory.yml
+group_vars/timeservers/vault.yml
+.vault_pass
+.ansible_cache/
+*.retry
+.DS_Store
+*.md
+!README.md

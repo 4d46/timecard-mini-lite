@@ -1,0 +1,61 @@
+---
+# Non-secret configuration.
+# Vault variables are proxied here so templates use clean names.
+# Secret values live only in vault.yml.tpl / 1Password — never here.
+
+# --- System ---
+admin_user: admin
+admin_group: sudo
+timezone: UTC
+locale: en_GB.UTF-8
+hostname_fqdn: "{{ vault_hostname_fqdn }}"
+hostname_short: "{{ vault_hostname_short }}"
+
+# SSH hardening — set to true once SSH key auth is confirmed working
+disable_password_auth: false
+
+# --- Network ---
+network_interface: eth0
+ntp_allowed_network: "{{ vault_ntp_allowed_network }}"
+ntp_allowed_netmask: "{{ vault_ntp_allowed_netmask }}"
+
+# NTP fallback servers — UK National Physical Laboratory (UTC(NPL), atomic clock)
+ntp_fallback_servers:
+  - ntp1.npl.co.uk
+  - ntp2.npl.co.uk
+
+# --- Boot / Hardware ---
+boot_firmware_path: /boot/firmware
+boot_order: "0xf16"                  # NVMe-first, eMMC fallback, USB last
+pcie_enabled: true                   # PCIe for NVMe SSD on Waveshare CM4-IO-BASE-A
+
+# --- TimeBeat ---
+timebeat_version: "2.2.20"
+timebeat_arch: arm64
+timebeat_deb_url: "https://license.timebeat.app/releases/stable/{{ timebeat_version }}/timebeat-{{ timebeat_version }}-{{ timebeat_arch }}.deb"
+timebeat_deb_dest: "/tmp/timebeat-{{ timebeat_version }}-{{ timebeat_arch }}.deb"
+timebeat_deb_checksum: "sha256:8b25bf0603bf63d364539a2c159a1b3b6e93a236e6f9499a640aefb355380aee"
+timebeat_config_dir: /etc/timebeat
+# On a fresh Pi OS Lite install with dtoverlay=disable-bt, the freed BT UART (PL011/UART0)
+# becomes /dev/ttyAMA0. The TimeBeat Mini HAT Essential connects GNSS to this UART.
+# (On the TimeBeat-provided image this may appear as /dev/ttyS0 — different base config.)
+timebeat_gnss_device: /dev/ttyAMA0
+timebeat_gnss_baud: 9600
+timebeat_gnss_offset: 235000000     # static offset in ns — serial latency for Essential module
+timebeat_license_path: /etc/timebeat/timebeat.lic
+
+# --- TLS / certbot ---
+certbot_gandi_ini: /etc/letsencrypt/gandi.ini
+certbot_cert_dir: "/etc/letsencrypt/live/{{ hostname_fqdn }}"
+
+# --- NTPsec / NTS ---
+ntpsec_ssl_dir: /etc/ntpsec/ssl
+nts_port: 4460
+
+# --- Firewall ---
+ufw_allowed_ports:
+  - { port: 22,   proto: tcp }       # SSH
+  - { port: 123,  proto: udp }       # NTP
+  - { port: 319,  proto: udp }       # PTP event messages
+  - { port: 320,  proto: udp }       # PTP general messages
+  - { port: 4460, proto: tcp }       # NTS key exchange (NTPsec)

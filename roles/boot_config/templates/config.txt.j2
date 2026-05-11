@@ -1,0 +1,33 @@
+# Managed by Ansible — do not edit manually
+# timecard-mini-lite: boot configuration for TimeBeat Mini HAT Essential on CM4
+
+[all]
+# Enable UART — required for GNSS serial communication
+enable_uart=1
+
+# Disable Bluetooth — frees the primary PL011 UART (becomes /dev/ttyAMA0 on GPIO14/15)
+# The TimeBeat Mini HAT Essential connects GNSS to this freed UART.
+dtoverlay=disable-bt
+
+# Additional UART overlays — required by TimeBeat Mini HAT
+# These enable PL011 UARTs on additional GPIO pins for HAT communication
+dtoverlay=uart1
+dtoverlay=uart2
+dtoverlay=uart3
+dtoverlay=uart4
+dtoverlay=uart5
+
+{% if pcie_enabled %}
+# PCIe for NVMe SSD (Waveshare CM4-IO-BASE-A carrier board)
+dtparam=pcie=on
+{% endif %}
+
+# Disable audio (not needed on a headless timeserver)
+dtparam=audio=off
+
+# I2C (commented out — u-blox GNSS is also available on I2C bus 1, addr 0x42, if needed)
+# dtparam=i2c_arm=on
+
+[pi4]
+# CPU boost for CM4
+arm_boost=1

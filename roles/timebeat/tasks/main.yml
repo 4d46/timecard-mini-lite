@@ -1,0 +1,56 @@
+---
+- name: Check installed TimeBeat version
+  ansible.builtin.command: dpkg-query -W -f='${Version}' timebeat
+  register: timebeat_installed_version
+  failed_when: false
+  changed_when: false
+
+- name: Download TimeBeat deb
+  ansible.builtin.get_url:
+    url: "{{ timebeat_deb_url }}"
+    dest: "{{ timebeat_deb_dest }}"
+    checksum: "{{ timebeat_deb_checksum }}"
+    mode: "0644"
+  when: timebeat_installed_version.stdout != timebeat_version
+
+- name: Install TimeBeat deb
+  ansible.builtin.apt:
+    deb: "{{ timebeat_deb_dest }}"
+    state: present
+  when: timebeat_installed_version.stdout != timebeat_version
+  notify: Restart timebeat
+
+- name: Ensure TimeBeat config directory exists
+  ansible.builtin.file:
+    path: "{{ timebeat_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy timebeat.yml configuration
+  ansible.builtin.template:
+    src: timebeat.yml.j2
+    dest: "{{ timebeat_config_dir }}/timebeat.yml"
+    owner: root
+    group: root
+    mode: "0640"
+    backup: true
+  notify: Restart timebeat
+
+- name: Deploy TimeBeat license file
+  ansible.builtin.copy:
+    content: "{{ vault_timebeat_license }}"
+    dest: "{{ timebeat_license_path }}"
+    owner: root
+    group: root
+    mode: "0640"
+  no_log: true
+  notify: Restart timebeat
+
+- name: Enable and start timebeat service
+  ansible.builtin.systemd:
+    name: timebeat
+    enabled: true
+    state: started
+    daemon_reload: true

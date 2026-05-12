@@ -6,23 +6,38 @@
     owner: root
     group: root
     mode: "0755"
-    backup: true
   notify: Reboot host
 
-# The TimeBeat community guide suggests adding console=ttyAMA0 to cmdline.txt.
-# We instead REMOVE the serial console because ttyAMA0 is our GNSS UART — kernel boot
-# messages on that port would corrupt GNSS data. SSH provides all access we need.
-- name: Remove serial console from cmdline.txt (prevents kernel messages on GNSS UART)
+- name: Remove serial console from cmdline.txt
   ansible.builtin.replace:
     path: "{{ boot_firmware_path }}/cmdline.txt"
     regexp: 'console=serial0,115200 '
     replace: ''
   notify: Reboot host
 
+- name: Ensure plymouth.ignore-serial-consoles in cmdline.txt
+  ansible.builtin.lineinfile:
+    path: "{{ boot_firmware_path }}/cmdline.txt"
+    backrefs: true
+    regexp: '^((?!.*plymouth\.ignore-serial-consoles).+)$'
+    line: '\1 plymouth.ignore-serial-consoles'
+  notify: Reboot host
+
 - name: Read current EEPROM config
   ansible.builtin.command: rpi-eeprom-config
   register: current_eeprom
   changed_when: false
+
+- name: Enable flashrom for CM4 EEPROM programming
+  ansible.builtin.lineinfile:
+    path: /etc/default/rpi-eeprom-update
+    line: "{{ item }}"
+    create: true
+    mode: "0644"
+  loop:
+    - RPI_EEPROM_USE_FLASHROM=1
+    - CM4_ENABLE_RPI_EEPROM_UPDATE=1
+  when: boot_order not in current_eeprom.stdout
 
 - name: Write desired EEPROM config to temp file
   ansible.builtin.copy:

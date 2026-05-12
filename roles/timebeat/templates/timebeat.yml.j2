@@ -13,7 +13,7 @@ timebeat:
   clock_sync:
 
     adjust_clock: true
-    step_limit: 15m
+    #step_limit: 15m
 
     primary_clocks:
 
@@ -43,7 +43,7 @@ timebeat:
       - protocol:     timebeat_opentimecard_mini
         device:       '{{ timebeat_gnss_device }}'
         baud:         {{ timebeat_gnss_baud }}
-        card_config:  ['gnss:signal:gps+glonass+galileo']
+        #card_config:  ['gnss:signal:gps+glonass+galileo']
         offset:       {{ timebeat_gnss_offset }}
         atomic:       false
         monitor_only: false
@@ -69,8 +69,16 @@ seccomp.enabled: false
 setup.dashboards.enabled: false
 setup.ilm.enabled: false
 
-# Metrics output: configure hosts if using ELK stack; connection errors are benign otherwise
-output.elasticsearch:
-  hosts: ['localhost:9200']
+#output.elasticsearch:
+  #hosts: ['localhost:9200']
 
 monitoring.enabled: false
+
+output.file:
+  enabled: true
+  path: "/tmp/timebeat"
+  filename: timebeat
+  rotate_every_kb: 10000
+  number_of_files: 7
+  permissions: 0600
+  rotate_on_startup: true

@@ -36,12 +36,9 @@ timebeat_deb_url: "https://license.timebeat.app/releases/stable/{{ timebeat_vers
 timebeat_deb_dest: "/tmp/timebeat-{{ timebeat_version }}-{{ timebeat_arch }}.deb"
 timebeat_deb_checksum: "sha256:8b25bf0603bf63d364539a2c159a1b3b6e93a236e6f9499a640aefb355380aee"
 timebeat_config_dir: /etc/timebeat
-# On a fresh Pi OS Lite install with dtoverlay=disable-bt, the freed BT UART (PL011/UART0)
-# becomes /dev/ttyAMA0. The TimeBeat Mini HAT Essential connects GNSS to this UART.
-# (On the TimeBeat-provided image this may appear as /dev/ttyS0 — different base config.)
-timebeat_gnss_device: /dev/ttyAMA0
+timebeat_gnss_device: /dev/ttyS0    # mini-UART — confirmed working from original TimeBeat image
 timebeat_gnss_baud: 9600
-timebeat_gnss_offset: 235000000     # static offset in ns — serial latency for Essential module
+timebeat_gnss_offset: 225000000     # static offset in ns — from original TimeBeat image config
 timebeat_license_path: /etc/timebeat/timebeat.lic
 
 # --- TLS / certbot ---

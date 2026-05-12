@@ -51,15 +51,14 @@ Create an item in 1Password with the following structure:
 
 | Vault | Item | Field | Value |
 |---|---|---|---|
-| Homelab | Timeserver | `password` | Admin user password (set during Pi Imager flash) |
-| Homelab | Timeserver | `ssh-public-key` | Your SSH public key (`cat ~/.ssh/id_ed25519.pub`) |
-| Homelab | Timeserver | `hostname-fqdn` | e.g. `nimrod.flbr.uk` |
-| Homelab | Timeserver | `hostname-short` | e.g. `nimrod` |
-| Homelab | Timeserver | `acme-email` | Your email for Let's Encrypt registration |
-| Homelab | Timeserver | `gandi-livedns-token` | Gandi Personal Access Token (DNS scope, domain-restricted) |
-| Homelab | Timeserver | `license` | TimeBeat license file contents |
-| Homelab | Timeserver | `ntp-allowed-network` | Network address allowed to query NTP (e.g. `192.168.1.0`) |
-| Homelab | Timeserver | `ntp-allowed-netmask` | Netmask for NTP access control (e.g. `255.255.255.0`) |
+| System Credentials | Timeserver | `password` | Admin user password (set during Pi Imager flash) |
+| System Credentials | Timeserver | `ssh-public-key` | Your SSH public key (`cat ~/.ssh/id_ed25519.pub`) |
+| System Credentials | Timeserver | `hostname-fqdn` | e.g. `nimrod.flbr.uk` |
+| System Credentials | Timeserver | `hostname-short` | e.g. `nimrod` |
+| System Credentials | Timeserver | `gandi-livedns-token` | Gandi Personal Access Token (DNS scope, domain-restricted) |
+| System Credentials | Timeserver | `license` | TimeBeat license file contents |
+| System Credentials | Timeserver | `ntp-allowed-network` | Network address allowed to query NTP (e.g. `192.168.1.0`) |
+| System Credentials | Timeserver | `ntp-allowed-netmask` | Netmask for NTP access control (e.g. `255.255.255.0`) |
 
 The Gandi token should be scoped to **DNS permissions only** for the specific domain — see [Gandi PAT documentation](https://docs.gandi.net/en/domain_names/advanced_users/api.html).
 
@@ -174,7 +173,7 @@ All variables are in `group_vars/timeservers/vars.yml`.
 | `boot_order` | `0xf16` | EEPROM boot order (NVMe→eMMC→USB) |
 | `pcie_enabled` | `true` | Enable PCIe for NVMe |
 | `timebeat_version` | `2.2.20` | TimeBeat package version |
-| `timebeat_gnss_device` | `/dev/ttyAMA0` | GNSS serial device |
+| `timebeat_gnss_device` | `/dev/ttyS0` | GNSS serial device |
 | `timebeat_gnss_baud` | `9600` | GNSS baud rate |
 | `nts_port` | `4460` | NTS key-exchange port |
 
@@ -211,7 +210,7 @@ Certificates are issued by Let's Encrypt via DNS-01 challenge using the Gandi Li
 
 - Certificate stored in: `/etc/letsencrypt/live/<fqdn>/`
 - Deployed to NTPsec at: `/etc/ntpsec/ssl/`
-- Auto-renewed by: `certbot.timer` (systemd timer installed by certbot)
+- Auto-renewed by: cron job running `certbot renew` at 00:00 and 12:00 daily
 - Renewal hook: `/etc/letsencrypt/renewal-hooks/deploy/ntpsec-nts`
 
 ---

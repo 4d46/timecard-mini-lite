@@ -22,6 +22,8 @@
       - avahi-daemon
       - triggerhappy
       - chrony
+      - certbot
+      - python3-certbot-dns-gandi
     state: absent
     purge: true
     autoremove: true
@@ -38,8 +40,7 @@
       - pps-tools
       - tcpdump
       - ntpsec
-      - certbot
-      - python3-certbot-dns-gandi
+      - python3-venv
       - ufw
       - unattended-upgrades
       - apt-listchanges
@@ -106,6 +107,12 @@
 #     validate: /usr/sbin/sshd -t -f %s
 #   when: disable_password_auth | default(false)
 #   notify: Restart sshd
+
+- name: Ensure i2c-dev module is loaded at boot
+  ansible.builtin.lineinfile:
+    path: /etc/modules
+    line: i2c-dev
+    state: present
 
 - name: Configure unattended-upgrades (security only, no auto-reboot)
   ansible.builtin.copy:

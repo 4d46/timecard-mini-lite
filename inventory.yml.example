@@ -11,4 +11,6 @@ all:
         server.domain.com:                            # replace with your hostname-fqdn from vault
           ansible_host: 192.168.x.x                   # replace with actual IP
           ansible_user: admin                         # must match admin_user in vars.yml
-          ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+          # SSH key auth uses the 1Password SSH agent — no key file needed.
+          # Ensure 1Password SSH agent is enabled and ~/.ssh/config contains:
+          #   Host * IdentityAgent ~/.1password/agent.sock

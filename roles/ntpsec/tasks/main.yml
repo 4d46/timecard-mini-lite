@@ -1,4 +1,12 @@
 ---
+- name: Ensure NTPsec log directory exists
+  ansible.builtin.file:
+    path: /var/log/ntpsec
+    state: directory
+    owner: ntpsec
+    group: ntpsec
+    mode: "0755"
+
 - name: Ensure NTPsec SSL directory exists
   ansible.builtin.file:
     path: "{{ ntpsec_ssl_dir }}"

@@ -7,6 +7,38 @@
     group: ntpsec
     mode: "0750"
 
+- name: Create certbot virtualenv with certbot-dns-gandi
+  ansible.builtin.pip:
+    name:
+      - certbot
+      - certbot-dns-gandi
+      - "pyOpenSSL<24.0.0"
+    virtualenv: /opt/certbot
+    virtualenv_command: python3 -m venv
+    state: present
+
+- name: Symlink certbot into PATH
+  ansible.builtin.file:
+    src: /opt/certbot/bin/certbot
+    dest: /usr/local/bin/certbot
+    state: link
+
+- name: Schedule certbot renewal
+  ansible.builtin.cron:
+    name: certbot-renew
+    minute: "0"
+    hour: "0,12"
+    job: "/usr/local/bin/certbot renew -q"
+    user: root
+
+- name: Create /etc/letsencrypt directory
+  ansible.builtin.file:
+    path: /etc/letsencrypt
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: Write Gandi LiveDNS credentials file
   ansible.builtin.copy:
     content: "dns_gandi_token={{ vault_gandi_token }}\n"
@@ -26,7 +58,7 @@
     certbot certonly
     --authenticator dns-gandi
     --dns-gandi-credentials {{ certbot_gandi_ini }}
-    --email {{ vault_acme_email }}
+    --register-unsafely-without-email
     --agree-tos
     --non-interactive
     -d {{ hostname_fqdn }}

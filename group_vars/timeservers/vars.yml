@@ -54,6 +54,9 @@ ntpsec_enabled: false                    # Disabled pending accuracy investigati
 ntpsec_ssl_dir: /etc/ntpsec/ssl
 nts_port: 4460
 
+# --- Tools ---
+gnss_survey_enabled: true
+
 # --- Firewall ---
 ufw_allowed_ports:
   - { port: 22,   proto: tcp }       # SSH

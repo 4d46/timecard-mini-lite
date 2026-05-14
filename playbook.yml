@@ -22,6 +22,8 @@
     - ntpsec
     - firewall
     - timebeat
+    - role: gnss_survey
+      when: gnss_survey_enabled | default(false)
 
   post_tasks:
     - name: Flush all handlers

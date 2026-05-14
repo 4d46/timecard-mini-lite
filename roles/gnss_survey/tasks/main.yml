@@ -1,0 +1,46 @@
+---
+- name: Create gnss_survey installation directory
+  ansible.builtin.file:
+    path: /opt/gnss_survey
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy gnss_survey.py
+  ansible.builtin.copy:
+    src: gnss_survey.py
+    dest: /opt/gnss_survey/gnss_survey.py
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy README.md
+  ansible.builtin.copy:
+    src: README.md
+    dest: /opt/gnss_survey/README.md
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create venv and install smbus2
+  ansible.builtin.pip:
+    name: smbus2
+    virtualenv: /opt/gnss_survey/venv
+    virtualenv_command: python3 -m venv
+
+- name: Add admin user to i2c group for device access without sudo
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    groups: i2c
+    append: true
+
+- name: Install gnss_survey command
+  ansible.builtin.copy:
+    dest: /usr/local/bin/gnss_survey
+    owner: root
+    group: root
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      exec /opt/gnss_survey/venv/bin/python3 /opt/gnss_survey/gnss_survey.py "$@"

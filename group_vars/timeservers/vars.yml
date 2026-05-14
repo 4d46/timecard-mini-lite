@@ -40,12 +40,17 @@ timebeat_gnss_device: /dev/ttyS0    # mini-UART — confirmed working from origi
 timebeat_gnss_baud: 9600
 timebeat_gnss_offset: 225000000     # static offset in ns — from original TimeBeat image config
 timebeat_license_path: /etc/timebeat/timebeat.lic
+timebeat_ntp_ip: "{{ ansible_host }}"    # IP TimeBeat binds NTP on (matches inventory host)
+timebeat_cli_port: 65129
+timebeat_cli_key: /etc/timebeat/cli_id_rsa
+timebeat_cli_password: "{{ vault_timebeat_cli_password }}"
 
 # --- TLS / certbot ---
 certbot_gandi_ini: /etc/letsencrypt/gandi.ini
 certbot_cert_dir: "/etc/letsencrypt/live/{{ hostname_fqdn }}"
 
 # --- NTPsec / NTS ---
+ntpsec_enabled: false                    # Disabled pending accuracy investigation; TimeBeat serves NTP
 ntpsec_ssl_dir: /etc/ntpsec/ssl
 nts_port: 4460
 

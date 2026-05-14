@@ -37,6 +37,13 @@ timebeat:
         delayrequest_interval:    0
         interface:                {{ network_interface }}
 
+      # NTP unicast server — serves NTP directly while NTPsec is disabled
+      - protocol:       ntp
+        ip:             '{{ timebeat_ntp_ip }}'
+        serve_unicast:  true
+        server_only:    true
+        interface:      {{ network_interface }}
+
     secondary_clocks:
 
       # TimeBeat Mini HAT Essential — u-blox MAX-F10S GNSS (provides major time for PPS)
@@ -51,8 +58,17 @@ timebeat:
     advanced:
       interference_monitor:
         backoff_timer: 5m
+      linux_specific:
+        tai_offset: 37s
       ptp_tuning:
         clock_quality:
+      cli:
+        enable: true
+        bind_port: {{ timebeat_cli_port }}
+        bind_host: 127.0.0.1
+        server_key: "{{ timebeat_cli_key }}"
+        username: "admin"
+        password: "{{ timebeat_cli_password }}"
 
 # Logging
 logging.to_files: true

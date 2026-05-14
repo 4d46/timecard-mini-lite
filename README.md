@@ -59,6 +59,7 @@ Create an item in 1Password with the following structure:
 | System Credentials | Timeserver | `license` | TimeBeat license file contents |
 | System Credentials | Timeserver | `ntp-allowed-network` | Network address allowed to query NTP (e.g. `192.168.1.0`) |
 | System Credentials | Timeserver | `ntp-allowed-netmask` | Netmask for NTP access control (e.g. `255.255.255.0`) |
+| System Credentials | Timeserver | `timebeat-cli-password` | TimeBeat local CLI password (localhost only) |
 
 The Gandi token should be scoped to **DNS permissions only** for the specific domain — see [Gandi PAT documentation](https://docs.gandi.net/en/domain_names/advanced_users/api.html).
 

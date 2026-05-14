@@ -32,9 +32,9 @@
     nts_enabled: "{{ nts_cert_stat.stat.exists }}"
   notify: Restart ntpsec
 
-- name: Enable and start ntpsec
+- name: Manage ntpsec service
   ansible.builtin.systemd:
     name: ntpsec
-    enabled: true
-    state: started
+    enabled: "{{ ntpsec_enabled }}"
+    state: "{{ 'started' if ntpsec_enabled else 'stopped' }}"
     daemon_reload: true

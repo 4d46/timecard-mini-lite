@@ -56,6 +56,7 @@ nts_port: 4460
 
 # --- Tools ---
 gnss_survey_enabled: true
+gnsstool_enabled: true
 
 # --- Firewall ---
 ufw_allowed_ports:

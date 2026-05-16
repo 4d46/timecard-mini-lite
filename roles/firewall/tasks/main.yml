@@ -6,7 +6,7 @@
   loop:
     - { direction: incoming, policy: deny }
     - { direction: outgoing, policy: allow }
-    - { direction: routed,   policy: deny }
+    - { direction: routed, policy: deny }
 
 - name: Allow configured ports
   community.general.ufw:

@@ -51,7 +51,7 @@
 - name: Check if certificate already exists
   ansible.builtin.stat:
     path: "{{ certbot_cert_dir }}/fullchain.pem"
-  register: cert_stat
+  register: tls_cert_stat
 
 - name: Issue Let's Encrypt certificate via Gandi DNS-01
   ansible.builtin.command: >
@@ -62,9 +62,9 @@
     --agree-tos
     --non-interactive
     -d {{ hostname_fqdn }}
-  when: not cert_stat.stat.exists
+  when: not tls_cert_stat.stat.exists
   no_log: true
-  register: certbot_result
+  register: tls_certbot_result
 
 - name: Deploy certbot renewal hook for NTPsec
   ansible.builtin.template:
@@ -76,5 +76,5 @@
 
 - name: Run deploy hook to copy initial certificates
   ansible.builtin.command: /etc/letsencrypt/renewal-hooks/deploy/ntpsec-nts
-  when: not cert_stat.stat.exists or (certbot_result is defined and certbot_result.changed)
+  when: not tls_cert_stat.stat.exists or (tls_certbot_result is defined and tls_certbot_result.changed)
   notify: Restart ntpsec

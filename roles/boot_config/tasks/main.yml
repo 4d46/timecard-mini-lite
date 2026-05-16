@@ -25,7 +25,7 @@
 
 - name: Read current EEPROM config
   ansible.builtin.command: rpi-eeprom-config
-  register: current_eeprom
+  register: boot_config_current_eeprom
   changed_when: false
   check_mode: false
 
@@ -38,16 +38,16 @@
   loop:
     - RPI_EEPROM_USE_FLASHROM=1
     - CM4_ENABLE_RPI_EEPROM_UPDATE=1
-  when: boot_order not in current_eeprom.stdout
+  when: boot_order not in boot_config_current_eeprom.stdout
 
 - name: Write desired EEPROM config to temp file
   ansible.builtin.copy:
     content: "BOOT_ORDER={{ boot_order }}\n"
     dest: /tmp/eeprom_update.conf
     mode: "0644"
-  when: boot_order not in current_eeprom.stdout
+  when: boot_order not in boot_config_current_eeprom.stdout
 
 - name: Apply EEPROM boot order
   ansible.builtin.command: rpi-eeprom-config --apply /tmp/eeprom_update.conf
-  when: boot_order not in current_eeprom.stdout
+  when: boot_order not in boot_config_current_eeprom.stdout
   notify: Reboot host

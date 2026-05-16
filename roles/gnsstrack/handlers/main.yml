@@ -1,0 +1,9 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart gnsstrack
+  ansible.builtin.systemd:
+    name: gnsstrack
+    state: restarted

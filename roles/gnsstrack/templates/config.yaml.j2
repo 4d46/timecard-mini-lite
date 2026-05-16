@@ -1,0 +1,18 @@
+# Managed by Ansible — do not edit manually
+polling:
+  software_rate_ms: {{ gnsstrack_polling_software_rate_ms }}
+  normal_logging_rate_ms: {{ gnsstrack_polling_normal_logging_rate_ms }}
+  enhanced_logging_rate_ms: {{ gnsstrack_polling_enhanced_logging_rate_ms }}
+  enable_enhanced_on_anomaly: {{ gnsstrack_polling_enable_enhanced_on_anomaly | lower }}
+
+logging:
+  directory: "{{ gnsstrack_log_dir }}"
+  max_size_mb: {{ gnsstrack_log_max_size_mb }}
+  max_backups: {{ gnsstrack_log_max_backups }}
+
+i2c:
+  bus: {{ gnsstrack_i2c_bus }}
+  address: {{ gnsstrack_i2c_address }}
+
+status:
+  listen_address: "{{ gnsstrack_status_address }}"

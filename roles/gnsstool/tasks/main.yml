@@ -1,0 +1,46 @@
+---
+- name: Create gnsstool installation directory
+  ansible.builtin.file:
+    path: /opt/gnsstool
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy gnsstool.py
+  ansible.builtin.copy:
+    src: gnsstool.py
+    dest: /opt/gnsstool/gnsstool.py
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy README.md
+  ansible.builtin.copy:
+    src: README.md
+    dest: /opt/gnsstool/README.md
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create venv and install smbus2
+  ansible.builtin.pip:
+    name: smbus2
+    virtualenv: /opt/gnsstool/venv
+    virtualenv_command: python3 -m venv
+
+- name: Add admin user to i2c group for device access without sudo
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    groups: i2c
+    append: true
+
+- name: Install gnsstool command
+  ansible.builtin.copy:
+    dest: /usr/local/bin/gnsstool
+    owner: root
+    group: root
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      exec /opt/gnsstool/venv/bin/python3 /opt/gnsstool/gnsstool.py "$@"

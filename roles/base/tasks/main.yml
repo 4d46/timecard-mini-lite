@@ -1,0 +1,126 @@
+---
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+  notify: Restart cron
+
+- name: Set locale
+  community.general.locale_gen:
+    name: "{{ locale }}"
+    state: present
+
+- name: Update apt cache and upgrade packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Remove unnecessary packages
+  ansible.builtin.apt:
+    name:
+      - realvnc-vnc-server
+      - avahi-daemon
+      - triggerhappy
+      - chrony
+      - certbot
+      - python3-certbot-dns-gandi
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: Install essential packages
+  ansible.builtin.apt:
+    name:
+      - vim
+      - htop
+      - curl
+      - wget
+      - git
+      - i2c-tools
+      - pps-tools
+      - tcpdump
+      - ntpsec
+      - python3-venv
+      - ufw
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+
+- name: Create admin group
+  ansible.builtin.group:
+    name: "{{ admin_user }}"
+    state: present
+
+- name: Ensure admin user exists with correct groups
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    groups: "{{ admin_group }}"
+    append: true
+    shell: /bin/bash
+    password: "{{ vault_admin_password | password_hash('sha512') }}"
+    update_password: on_create
+    state: present
+
+- name: Deploy admin SSH public key
+  ansible.posix.authorized_key:
+    user: "{{ admin_user }}"
+    key: "{{ vault_admin_ssh_key }}"
+    state: present
+    exclusive: true
+  no_log: true
+
+- name: Ensure admin passwordless sudo
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ admin_user }}"
+    content: "{{ admin_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Harden SSH — disable root login
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart sshd
+
+- name: Harden SSH — disable ChallengeResponse authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?ChallengeResponseAuthentication'
+    line: 'ChallengeResponseAuthentication no'
+    state: present
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart sshd
+
+- name: Harden SSH — disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+    validate: /usr/sbin/sshd -t -f %s
+  when: disable_password_auth | default(false)
+  notify: Restart sshd
+
+- name: Ensure i2c-dev module is loaded at boot
+  ansible.builtin.lineinfile:
+    path: /etc/modules
+    line: i2c-dev
+    state: present
+
+- name: Configure unattended-upgrades (security only, no auto-reboot)
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    content: |
+      Unattended-Upgrade::Allowed-Origins {
+          "${distro_id}:${distro_codename}-security";
+      };
+      Unattended-Upgrade::Automatic-Reboot "false";
+    owner: root
+    group: root
+    mode: "0644"

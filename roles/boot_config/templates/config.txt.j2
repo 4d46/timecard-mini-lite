@@ -1,0 +1,39 @@
+# Managed by Ansible — do not edit manually
+# timecard-mini-lite: boot configuration for TimeBeat Mini HAT Essential on CM4
+
+# Standard Raspberry Pi OS globals
+auto_initramfs=1
+arm_64bit=1
+disable_overscan=1
+arm_boost=1
+dtparam=audio=off
+dtoverlay=i2c-rtc,ds3231
+
+[cm4]
+# Enable USB host mode on CM4 XHCI controller
+otg_mode=1
+# SPI required for EEPROM flashing via flashrom on CM4
+dtparam=spi=on
+dtoverlay=audremap
+dtoverlay=spi-gpio40-45
+
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+
+[all]
+# Lock CPU frequency — stabilises mini-UART (ttyS0) baud rate for GNSS
+arm_freq_min=1500
+force_turbo=1
+
+enable_uart=1
+dtparam=i2c_arm=on
+dtoverlay=i2c0
+dtparam=i2c_vc=on
+
+# WiFi disabled — wired-only timeserver
+dtoverlay=disable-wifi
+
+{% if pcie_enabled %}
+# PCIe for NVMe SSD (Waveshare CM4-IO-BASE-A carrier board)
+dtparam=pcie=on
+{% endif %}

@@ -1,0 +1,9 @@
+profile: production
+exclude_paths:
+  - .git/
+  - .ansible_cache/
+skip_list:
+  - yaml[line-length]
+  - no-changed-when
+warn_list:
+  - experimental

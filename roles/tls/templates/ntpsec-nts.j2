@@ -1,0 +1,18 @@
+#!/bin/bash
+# Managed by Ansible — renewal deploy hook for NTPsec NTS certificates
+# Runs automatically after each successful certbot renewal.
+
+set -e
+
+LIVE=/etc/letsencrypt/live/{{ hostname_fqdn }}
+DEST={{ ntpsec_ssl_dir }}
+
+cp "${LIVE}/fullchain.pem" "${DEST}/fullchain.pem"
+cp "${LIVE}/privkey.pem"   "${DEST}/privkey.pem"
+
+chown root:ntpsec "${DEST}/privkey.pem"
+chmod 640         "${DEST}/privkey.pem"
+chown root:ntpsec "${DEST}/fullchain.pem"
+chmod 644         "${DEST}/fullchain.pem"
+
+systemctl restart ntpsec

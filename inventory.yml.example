@@ -1,0 +1,16 @@
+---
+# Copy this to inventory.yml and fill in the real IP. inventory.yml is git-ignored.
+#
+# First run: Pi Imager creates the 'admin' user with password auth. Use deploy-bootstrap.
+# Subsequent runs: SSH key auth is added by the base role. Use deploy.
+
+all:
+  children:
+    timeservers:
+      hosts:
+        server.domain.com:                            # replace with your hostname-fqdn from vault
+          ansible_host: 192.168.x.x                   # replace with actual IP
+          ansible_user: admin                         # must match admin_user in vars.yml
+          # SSH key auth uses the 1Password SSH agent — no key file needed.
+          # Ensure 1Password SSH agent is enabled and ~/.ssh/config contains:
+          #   Host * IdentityAgent ~/.1password/agent.sock

@@ -1,0 +1,53 @@
+---
+- name: Deploy /boot/firmware/config.txt
+  ansible.builtin.template:
+    src: config.txt.j2
+    dest: "{{ boot_firmware_path }}/config.txt"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Reboot host
+
+- name: Remove serial console from cmdline.txt
+  ansible.builtin.replace:
+    path: "{{ boot_firmware_path }}/cmdline.txt"
+    regexp: 'console=serial0,115200 '
+    replace: ''
+  notify: Reboot host
+
+- name: Ensure plymouth.ignore-serial-consoles in cmdline.txt
+  ansible.builtin.lineinfile:
+    path: "{{ boot_firmware_path }}/cmdline.txt"
+    backrefs: true
+    regexp: '^((?!.*plymouth\.ignore-serial-consoles).+)$'
+    line: '\1 plymouth.ignore-serial-consoles'
+  notify: Reboot host
+
+- name: Read current EEPROM config
+  ansible.builtin.command: rpi-eeprom-config
+  register: boot_config_current_eeprom
+  changed_when: false
+  check_mode: false
+
+- name: Enable flashrom for CM4 EEPROM programming
+  ansible.builtin.lineinfile:
+    path: /etc/default/rpi-eeprom-update
+    line: "{{ item }}"
+    create: true
+    mode: "0644"
+  loop:
+    - RPI_EEPROM_USE_FLASHROM=1
+    - CM4_ENABLE_RPI_EEPROM_UPDATE=1
+  when: boot_order not in boot_config_current_eeprom.stdout
+
+- name: Write desired EEPROM config to temp file
+  ansible.builtin.copy:
+    content: "BOOT_ORDER={{ boot_order }}\n"
+    dest: /tmp/eeprom_update.conf
+    mode: "0644"
+  when: boot_order not in boot_config_current_eeprom.stdout
+
+- name: Apply EEPROM boot order
+  ansible.builtin.command: rpi-eeprom-config --apply /tmp/eeprom_update.conf
+  when: boot_order not in boot_config_current_eeprom.stdout
+  notify: Reboot host

@@ -57,6 +57,20 @@ nts_port: 4460
 # --- Tools ---
 gnss_survey_enabled: true
 gnsstool_enabled: true
+gnsstrack_enabled: true
+
+# --- gnsstrack ---
+gnsstrack_log_dir: /var/log/gnsstrack
+gnsstrack_log_simulation_dir: /tmp/gnsstrack
+gnsstrack_log_max_size_mb: 50
+gnsstrack_log_max_backups: 100
+gnsstrack_i2c_bus: 1
+gnsstrack_i2c_address: "0x42"
+gnsstrack_status_address: "127.0.0.1:8080"
+gnsstrack_polling_software_rate_ms: 1000
+gnsstrack_polling_normal_logging_rate_ms: 60000
+gnsstrack_polling_enhanced_logging_rate_ms: 1000
+gnsstrack_polling_enable_enhanced_on_anomaly: true
 
 # --- Firewall ---
 ufw_allowed_ports:

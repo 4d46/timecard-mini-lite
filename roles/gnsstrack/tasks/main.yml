@@ -26,6 +26,7 @@
     state: directory
     mode: "0755"
   when: gnsstrack_installed_version.rc != 0 or gnsstrack_latest_tag not in gnsstrack_installed_version.stdout
+  check_mode: false
 
 - name: Download gnsstrack release tarball
   ansible.builtin.get_url:

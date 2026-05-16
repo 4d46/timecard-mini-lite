@@ -61,6 +61,7 @@ gnsstrack_enabled: true
 
 # --- gnsstrack ---
 gnsstrack_log_dir: /var/log/gnsstrack
+gnsstrack_log_simulation_dir: /tmp/gnsstrack
 gnsstrack_log_max_size_mb: 50
 gnsstrack_log_max_backups: 100
 gnsstrack_i2c_bus: 1

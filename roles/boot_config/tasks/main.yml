@@ -27,6 +27,7 @@
   ansible.builtin.command: rpi-eeprom-config
   register: current_eeprom
   changed_when: false
+  check_mode: false
 
 - name: Enable flashrom for CM4 EEPROM programming
   ansible.builtin.lineinfile:

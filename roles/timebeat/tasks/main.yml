@@ -4,6 +4,7 @@
   register: timebeat_installed_version
   failed_when: false
   changed_when: false
+  check_mode: false
 
 - name: Download TimeBeat deb
   ansible.builtin.get_url:

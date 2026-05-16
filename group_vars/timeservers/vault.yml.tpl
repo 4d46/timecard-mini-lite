@@ -5,8 +5,8 @@
 # Fields required:
 #   password              — admin user password (set via Pi Imager, used for idempotent hash)
 #   ssh-public-key        — admin SSH public key (e.g. ssh-ed25519 AAAA...)
-#   hostname-fqdn         — fully qualified hostname (e.g. nimrod.flbr.uk)
-#   hostname-short        — short hostname (e.g. nimrod)
+#   hostname-fqdn         — fully qualified hostname (e.g. timeserver.example.com)
+#   hostname-short        — short hostname (e.g. timeserver)
 #   gandi-livedns-token   — Gandi Personal Access Token (DNS-only scope, domain-restricted)
 #   license               — TimeBeat license file contents
 #   ntp-allowed-network   — network address allowed to query NTP (e.g. 192.168.1.0)

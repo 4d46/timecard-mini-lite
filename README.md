@@ -53,8 +53,8 @@ Create an item in 1Password with the following structure:
 |---|---|---|---|
 | System Credentials | Timeserver | `password` | Admin user password (set during Pi Imager flash) |
 | System Credentials | Timeserver | `ssh-public-key` | Your SSH public key (`cat ~/.ssh/id_ed25519.pub`) |
-| System Credentials | Timeserver | `hostname-fqdn` | e.g. `nimrod.flbr.uk` |
-| System Credentials | Timeserver | `hostname-short` | e.g. `nimrod` |
+| System Credentials | Timeserver | `hostname-fqdn` | e.g. `timeserver.example.com` |
+| System Credentials | Timeserver | `hostname-short` | e.g. `timeserver` |
 | System Credentials | Timeserver | `gandi-livedns-token` | Gandi Personal Access Token (DNS scope, domain-restricted) |
 | System Credentials | Timeserver | `license` | TimeBeat license file contents |
 | System Credentials | Timeserver | `ntp-allowed-network` | Network address allowed to query NTP (e.g. `192.168.1.0`) |
@@ -65,11 +65,11 @@ The Gandi token should be scoped to **DNS permissions only** for the specific do
 
 ### DNS prerequisite
 
-The FQDN (e.g. `nimrod.flbr.uk`) **must resolve** to the device's IP before the first deploy — the TLS role uses DNS-01 challenge to issue the Let's Encrypt certificate.
+The FQDN (e.g. `timeserver.example.com`) **must resolve** to the device's IP before the first deploy — the TLS role uses DNS-01 challenge to issue the Let's Encrypt certificate.
 
 Add an A record via your DNS provider:
 ```
-nimrod    A    <device IP>
+timeserver    A    <device IP>
 ```
 
 ---
@@ -82,7 +82,7 @@ In the Imager customisation settings (click the gear icon):
 
 | Setting | Value |
 |---|---|
-| Hostname | `nimrod` (or your chosen short hostname) |
+| Hostname | `timeserver` (or your chosen short hostname) |
 | Username | `admin` |
 | Password | (the password you stored in 1Password) |
 | Locale | GB / UTC |
@@ -185,11 +185,11 @@ All variables are in `group_vars/timeservers/vars.yml`.
 - **NTP**: `udp/123` — standard NTP, no authentication
 - **NTS**: `tcp/4460` — Network Time Security, authenticated NTP over TLS
 
-NTS clients must connect using the FQDN (e.g. `nimrod.flbr.uk`), not the IP — the certificate is validated against the hostname.
+NTS clients must connect using the FQDN (e.g. `timeserver.example.com`), not the IP — the certificate is validated against the hostname.
 
 Example NTPsec client configuration (`/etc/ntpsec/ntp.conf`):
 ```
-server nimrod.flbr.uk nts iburst
+server timeserver.example.com nts iburst
 ```
 
 ---
@@ -285,7 +285,7 @@ This prints errors directly to the terminal, making config issues much easier to
 
 **PPS not working** — Verify eth0 supports hardware timestamping: `ethtool -T eth0`. TimeBeat uses NIC hardware timestamping for PPS, not GPIO.
 
-**Certificate issuance failing** — Confirm the DNS A record is live (`dig nimrod.flbr.uk`), the Gandi token has DNS write permissions, and the domain is correct in 1Password.
+**Certificate issuance failing** — Confirm the DNS A record is live (`dig timeserver.example.com`), the Gandi token has DNS write permissions, and the domain is correct in 1Password.
 
 **SSH lockout** — Connect a keyboard/monitor, log in at console. The `admin` user has sudo access. Check `/etc/ssh/sshd_config`.
 

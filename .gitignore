@@ -4,6 +4,7 @@ group_vars/timeservers/vault.yml
 .ansible_cache/
 original-config/
 *.retry
+*.pdf
 .DS_Store
 *.md
 !README.md

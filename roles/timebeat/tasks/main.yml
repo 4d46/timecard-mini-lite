@@ -12,12 +12,15 @@
     checksum: "{{ timebeat_deb_checksum }}"
     mode: "0644"
   when: timebeat_installed_version.stdout != timebeat_version
+  check_mode: false
 
 - name: Install TimeBeat deb
   ansible.builtin.apt:
     deb: "{{ timebeat_deb_dest }}"
     state: present
-  when: timebeat_installed_version.stdout != timebeat_version
+  when:
+    - timebeat_installed_version.stdout != timebeat_version
+    - not ansible_check_mode
   notify: Restart timebeat
 
 - name: Ensure TimeBeat config directory exists

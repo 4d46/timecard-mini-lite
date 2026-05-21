@@ -72,6 +72,9 @@ gnsstrack_polling_normal_logging_rate_ms: 60000
 gnsstrack_polling_enhanced_logging_rate_ms: 1000
 gnsstrack_polling_enable_enhanced_on_anomaly: true
 
+# --- Elasticsearch ---
+timebeat_elasticsearch_host: "{{ vault_timebeat_elasticsearch_host }}"
+
 # --- Firewall ---
 ufw_allowed_ports:
   - { port: 22,   proto: tcp }       # SSH

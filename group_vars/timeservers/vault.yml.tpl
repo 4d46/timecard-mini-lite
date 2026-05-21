@@ -11,7 +11,8 @@
 #   license               — TimeBeat license file contents
 #   ntp-allowed-network   — network address allowed to query NTP (e.g. 192.168.1.0)
 #   ntp-allowed-netmask   — netmask for NTP access control (e.g. 255.255.255.0)
-#   timebeat-cli-password — TimeBeat local CLI password (localhost only)
+#   timebeat-cli-password     — TimeBeat local CLI password (localhost only)
+#   timebeat-elasticsearch-host — Elasticsearch host URL (e.g. http://hostname:9200)
 
 vault_admin_password:        "{{ op://System Credentials/Timeserver/password }}"
 vault_admin_ssh_key:         "{{ op://System Credentials/Timeserver/ssh-public-key }}"
@@ -21,4 +22,5 @@ vault_gandi_token:           "{{ op://System Credentials/Timeserver/gandi-livedn
 vault_timebeat_license:      "{{ op://System Credentials/Timeserver/license }}"
 vault_ntp_allowed_network:   "{{ op://System Credentials/Timeserver/ntp-allowed-network }}"
 vault_ntp_allowed_netmask:   "{{ op://System Credentials/Timeserver/ntp-allowed-netmask }}"
-vault_timebeat_cli_password: "{{ op://System Credentials/Timeserver/timebeat-cli-password }}"
+vault_timebeat_cli_password:        "{{ op://System Credentials/Timeserver/timebeat-cli-password }}"
+vault_timebeat_elasticsearch_host: "{{ op://System Credentials/Timeserver/timebeat-elasticsearch-host }}"

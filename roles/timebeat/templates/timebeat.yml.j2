@@ -81,20 +81,19 @@ logging.files:
 
 seccomp.enabled: false
 
-# Dashboards and ILM require Elasticsearch — disabled for standalone timeserver use
 setup.dashboards.enabled: false
-setup.ilm.enabled: false
-
-#output.elasticsearch:
-  #hosts: ['localhost:9200']
+setup.ilm.enabled: true
 
 monitoring.enabled: false
 
-output.file:
-  enabled: true
-  path: "/tmp/timebeat"
-  filename: timebeat
-  rotate_every_kb: 10000
-  number_of_files: 7
-  permissions: 0600
-  rotate_on_startup: true
+output.elasticsearch:
+  hosts: ["{{ timebeat_elasticsearch_host }}"]
+
+#output.file:
+#  enabled: true
+#  path: "/tmp/timebeat"
+#  filename: timebeat
+#  rotate_every_kb: 10000
+#  number_of_files: 7
+#  permissions: 0600
+#  rotate_on_startup: true

@@ -24,6 +24,7 @@ timebeat:
         pin:           0
         index:         0
         linked_device: '{{ timebeat_gnss_device }}'
+        cable_delay:   {{ timebeat_gps_cable_delay }}
         monitor_only:  false
 
       # PTP grandmaster — serves PTPv2 multicast on domain 0 via eth0.

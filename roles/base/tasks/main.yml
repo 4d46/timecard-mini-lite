@@ -86,6 +86,7 @@
     line: 'PermitRootLogin no'
     state: present
     validate: /usr/sbin/sshd -t -f %s
+  when: ssh_enforce_hardening | bool
   notify: Restart sshd
 
 - name: Harden SSH — disable ChallengeResponse authentication
@@ -95,6 +96,7 @@
     line: 'ChallengeResponseAuthentication no'
     state: present
     validate: /usr/sbin/sshd -t -f %s
+  when: ssh_enforce_hardening | bool
   notify: Restart sshd
 
 - name: Harden SSH — disable password authentication
@@ -104,7 +106,7 @@
     line: 'PasswordAuthentication no'
     state: present
     validate: /usr/sbin/sshd -t -f %s
-  when: disable_password_auth | default(false)
+  when: ssh_enforce_hardening | bool
   notify: Restart sshd
 
 - name: Ensure i2c-dev module is loaded at boot

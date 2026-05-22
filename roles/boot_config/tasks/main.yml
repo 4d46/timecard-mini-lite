@@ -1,8 +1,17 @@
 ---
-- name: Deploy /boot/firmware/config.txt
+- name: Detect boot firmware path
+  ansible.builtin.stat:
+    path: /boot/firmware/cmdline.txt
+  register: boot_config_firmware_stat
+
+- name: Set boot_config_resolved_path fact
+  ansible.builtin.set_fact:
+    boot_config_resolved_path: "{{ boot_config_firmware_stat.stat.exists | ternary('/boot/firmware', '/boot') }}"
+
+- name: Deploy config.txt
   ansible.builtin.template:
     src: config.txt.j2
-    dest: "{{ boot_firmware_path }}/config.txt"
+    dest: "{{ boot_config_resolved_path }}/config.txt"
     owner: root
     group: root
     mode: "0755"
@@ -10,14 +19,14 @@
 
 - name: Remove serial console from cmdline.txt
   ansible.builtin.replace:
-    path: "{{ boot_firmware_path }}/cmdline.txt"
+    path: "{{ boot_config_resolved_path }}/cmdline.txt"
     regexp: 'console=serial0,115200 '
     replace: ''
   notify: Reboot host
 
 - name: Ensure plymouth.ignore-serial-consoles in cmdline.txt
   ansible.builtin.lineinfile:
-    path: "{{ boot_firmware_path }}/cmdline.txt"
+    path: "{{ boot_config_resolved_path }}/cmdline.txt"
     backrefs: true
     regexp: '^((?!.*plymouth\.ignore-serial-consoles).+)$'
     line: '\1 plymouth.ignore-serial-consoles'

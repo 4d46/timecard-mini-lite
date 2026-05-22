@@ -38,6 +38,9 @@ timebeat_config_dir: /etc/timebeat
 timebeat_gnss_device: /dev/ttyS0    # mini-UART — confirmed working from original TimeBeat image
 timebeat_gnss_baud: 9600
 timebeat_gnss_offset: 225000000     # static offset in ns — from original TimeBeat image config
+# Cable delay compensation in nanoseconds (ns).
+# 3m RG174/RG58 cable is approx 15ns (5ns/m).
+timebeat_gps_cable_delay: 15
 timebeat_license_path: /etc/timebeat/timebeat.lic
 timebeat_ntp_ip: "{{ ansible_host }}"    # IP TimeBeat binds NTP on (matches inventory host)
 timebeat_cli_port: 65129

@@ -10,7 +10,7 @@ deploy: _inject
 
 # First-run: Pi Imager creates admin user with password auth
 deploy-bootstrap: _inject
-	ansible-playbook playbook.yml -u admin --ask-pass
+	ansible-playbook playbook.yml -u admin --ask-pass -e ssh_enforce_hardening=false --ssh-extra-args="-o IdentitiesOnly=yes"
 	@rm -f $(VAULT_YML)
 
 # Dry-run with diff (does not make changes)

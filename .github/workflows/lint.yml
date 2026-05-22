@@ -17,8 +17,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Ansible and ansible-lint
-        run: pip install ansible ansible-lint
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
       - name: Install collections
         run: ansible-galaxy collection install -r requirements.yml

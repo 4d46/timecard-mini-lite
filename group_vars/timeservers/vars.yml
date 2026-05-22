@@ -12,7 +12,7 @@ hostname_fqdn: "{{ vault_hostname_fqdn }}"
 hostname_short: "{{ vault_hostname_short }}"
 
 # SSH hardening — key auth confirmed working, password auth disabled
-disable_password_auth: true
+ssh_enforce_hardening: true
 
 # --- Network ---
 network_interface: eth0
@@ -25,7 +25,6 @@ ntp_fallback_servers:
   - ntp2.npl.co.uk
 
 # --- Boot / Hardware ---
-boot_firmware_path: /boot/firmware
 boot_order: "0xf16"                  # NVMe-first, eMMC fallback, USB last
 pcie_enabled: true                   # PCIe for NVMe SSD on Waveshare CM4-IO-BASE-A
 

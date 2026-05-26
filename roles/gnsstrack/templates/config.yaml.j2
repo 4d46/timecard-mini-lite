@@ -15,5 +15,10 @@ i2c:
   bus: {{ gnsstrack_i2c_bus }}
   address: {{ gnsstrack_i2c_address }}
 
+rtc:
+  bus: {{ gnsstrack_rtc_bus }}
+  address: {{ gnsstrack_rtc_address }}
+  logging_rate_ms: {{ gnsstrack_rtc_logging_rate_ms }}
+
 status:
   listen_address: "{{ gnsstrack_status_address }}"

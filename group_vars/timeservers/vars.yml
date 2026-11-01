@@ -29,11 +29,14 @@ boot_order: "0xf16"                  # NVMe-first, eMMC fallback, USB last
 pcie_enabled: true                   # PCIe for NVMe SSD on Waveshare CM4-IO-BASE-A
 
 # --- TimeBeat ---
-timebeat_version: "2.2.20"
+# Stable releases are listed at https://timebeat.app/downloads/software and
+# served from Google Cloud Storage. TimeBeat publishes no checksum for the .deb,
+# so the SHA-256 below is of the file as first downloaded (trust on first use).
+timebeat_version: "2.3.5"
 timebeat_arch: arm64
-timebeat_deb_url: "https://license.timebeat.app/releases/stable/{{ timebeat_version }}/timebeat-{{ timebeat_version }}-{{ timebeat_arch }}.deb"
+timebeat_deb_url: "https://storage.googleapis.com/timebeat-stable/{{ timebeat_version }}/timebeat-{{ timebeat_version }}-{{ timebeat_arch }}.deb"
 timebeat_deb_dest: "/tmp/timebeat-{{ timebeat_version }}-{{ timebeat_arch }}.deb"
-timebeat_deb_checksum: "sha256:8b25bf0603bf63d364539a2c159a1b3b6e93a236e6f9499a640aefb355380aee"
+timebeat_deb_checksum: "sha256:d60e52c230817826649b3d0929d933746df432590b3972fd30afc1887f218be5"
 timebeat_config_dir: /etc/timebeat
 timebeat_gnss_device: /dev/ttyS0    # mini-UART — confirmed working from original TimeBeat image
 timebeat_gnss_baud: 9600

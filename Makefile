@@ -1,4 +1,4 @@
-.PHONY: deploy deploy-bootstrap check lint test deps deps-check lock clean
+.PHONY: help deploy deploy-bootstrap check lint test deps deps-check lock clean _inject
 
 VAULT_TPL := group_vars/timeservers/vault.yml.tpl
 VAULT_YML := group_vars/timeservers/vault.yml
@@ -9,17 +9,31 @@ VAULT_YML := group_vars/timeservers/vault.yml
 # or Ctrl-C) and leaves the playbook's exit code for make to see.
 WITH_VAULT_CLEANUP := trap 'rm -f $(VAULT_YML)' EXIT INT TERM;
 
+# Plain 'make' lists the targets. Without this the first target in the file
+# would run, which used to be deploy.
+.DEFAULT_GOAL := help
+
+# Self-documenting: 'target: ## text' lines appear in the list, '##@ Name'
+# lines start a section. Targets without '##' (the _private ones) are hidden.
+##@ Help
+help: ## List the targets (the default for plain 'make')
+	@awk 'BEGIN {FS = ":[^#]*## "} \
+		/^##@ / {printf "\n%s\n", substr($$0, 5); next} \
+		/^[a-zA-Z0-9][a-zA-Z0-9_-]*:[^=]*## / {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@printf '\nOptions:\n  ARGS="..."           extra pip-compile flags for lock, e.g. ARGS="--upgrade-package ansible"\n  SKIP_DEPS_CHECK=1    run check/deploy despite a tooling mismatch (warns)\n'
+
+##@ Deploy
+# Dry-run with diff (does not make changes)
+check: deps-check _inject ## Dry run against the timeserver: show what deploy would change
+	$(WITH_VAULT_CLEANUP) ansible-playbook playbook.yml --check --diff
+
 # Normal idempotent re-run (admin SSH key must already be deployed)
-deploy: deps-check _inject
+deploy: deps-check _inject ## Apply the playbook to the timeserver
 	$(WITH_VAULT_CLEANUP) ansible-playbook playbook.yml
 
 # First-run: Pi Imager creates admin user with password auth
-deploy-bootstrap: deps-check _inject
+deploy-bootstrap: deps-check _inject ## First run on a fresh image (password login, no SSH hardening)
 	$(WITH_VAULT_CLEANUP) ansible-playbook playbook.yml -u admin --ask-pass -e ssh_enforce_hardening=false --ssh-extra-args="-o IdentitiesOnly=yes"
-
-# Dry-run with diff (does not make changes)
-check: deps-check _inject
-	$(WITH_VAULT_CLEANUP) ansible-playbook playbook.yml --check --diff
 
 # Always re-inject from 1Password — never reuse a stale vault.yml
 _inject:
@@ -27,7 +41,8 @@ _inject:
 
 # Python packages first: ansible-galaxy comes from them. --require-hashes makes
 # pip refuse any file whose SHA-256 doesn't match the lock.
-deps:
+##@ Dependencies (this machine)
+deps: ## Install the locked Python packages and Ansible collections
 	pip install --require-hashes -r requirements.txt
 	ansible-galaxy collection install -r requirements.yml
 
@@ -35,7 +50,7 @@ deps:
 # Ansible runs here and ships module code to the timeserver, so a stale
 # 'make deps' means running versions CI never tested. Runs before check and
 # deploy. Override (prints a warning): SKIP_DEPS_CHECK=1 make deploy
-deps-check:
+deps-check: ## Check installed tooling matches the lock (runs before check/deploy)
 	@python3 -I scripts/check-deps
 
 # Regenerate requirements.txt (the hash-pinned lock) from requirements.in,
@@ -45,20 +60,21 @@ deps-check:
 # Python (UV_PYTHON_DOWNLOADS=never stops uv fetching its own); nothing is installed.
 # click<8.3: pip-tools 7.6.1 with newer click writes a spurious --no-index into
 # the lock's header, and Dependabot re-runs that command when it updates the lock.
-lock:
+lock: ## Regenerate requirements.txt from requirements.in
 	UV_PYTHON_DOWNLOADS=never uvx --python python3 --with 'click<8.3' --from pip-tools pip-compile \
 		--generate-hashes --allow-unsafe --strip-extras --quiet \
 		--output-file=requirements.txt requirements.in $(ARGS)
 
-lint:
+##@ Develop
+lint: ## Run ansible-lint on the playbook (also in CI)
 	ansible-lint playbook.yml
 
 # Unit tests for the on-device Python tools (no hardware needed) and the
 # helper scripts in scripts/
-test:
+test: ## Run the gnsstool and helper-script tests (also in CI)
 	python3 -m unittest discover -s roles/gnsstool/tests
 	python3 -I -m unittest discover -s scripts/tests -p 'test_*.py'
 
-clean:
+clean: ## Remove the generated vault.yml and fact cache
 	rm -f $(VAULT_YML)
 	rm -rf .ansible_cache

@@ -169,8 +169,11 @@ Subsequent deploys use `make deploy` (SSH key auth). Always run `make check` fir
 
 ## Makefile targets
 
+Run `make` (or `make help`) to list the targets with one-line descriptions and the options they accept. Plain `make` only prints the list; it never deploys.
+
 | Target | Description |
 | --- | --- |
+| `make help` | List the targets (the default for plain `make`) |
 | `make deploy` | Normal idempotent run (SSH key auth) |
 | `make deploy-bootstrap` | First-run using password auth (`admin` user) |
 | `make check` | Dry-run with diff — no changes made |
@@ -178,6 +181,7 @@ Subsequent deploys use `make deploy` (SSH key auth). Always run `make check` fir
 | `make deps-check` | Check installed tooling matches the lock; runs before `check` and `deploy`, which stop on a mismatch (see [Local tooling check](#local-tooling-check)) |
 | `make lock` | Regenerate `requirements.txt` from `requirements.in` |
 | `make lint` | Run ansible-lint |
+| `make test` | Run the gnsstool and helper-script tests |
 | `make clean` | Remove generated vault.yml and fact cache |
 
 ---

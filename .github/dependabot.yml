@@ -1,11 +1,37 @@
 version: 2
+# Kept byte-identical in ansible-pi-rack and timecard-mini-lite: the two repos
+# share one control-machine Python environment, so their locks must match.
+#
+# Dependabot has no Ansible ecosystem: an unsupported package-ecosystem makes
+# GitHub reject this whole file, so no updates run at all. Renovate
+# (renovate.json) handles Ansible collections and container images instead.
+#
+# Security updates (a repository setting, not this file) still open their own
+# PRs as soon as an advisory lands; the groups below cover routine updates only.
 updates:
+  # Python packages in requirements.txt (pip-compile lock with hashes).
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+    # Include transitive packages (black, filelock, ...): by default only the
+    # direct ones in requirements.in are bumped, so the rest only ever moved
+    # when a security advisory forced them.
+    allow:
+      - dependency-type: "all"
+    # One PR per week per repo, so both locks can be merged together and
+    # compared, rather than drifting one package at a time.
+    groups:
+      python:
+        patterns: ["*"]
 
+  # GitHub Actions, pinned to commit SHAs.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+    groups:
+      actions:
+        patterns: ["*"]

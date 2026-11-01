@@ -38,5 +38,12 @@ jobs:
       - name: Run gnsstool unit tests
         run: python -m unittest discover -s roles/gnsstool/tests
 
+      - name: Test scripts
+        run: python3 -I -m unittest discover -s scripts/tests -p 'test_*.py'
+
+      # Also proves the check passes on a fresh install from the lock.
+      - name: Check installed tooling matches the lock
+        run: scripts/check-deps
+
       - name: Run ansible-lint
         run: ansible-lint playbook.yml

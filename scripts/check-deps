@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""check-deps - refuse to run Ansible with tooling that doesn't match the lock.
+
+Ansible runs on this machine and ships its module code to the hosts, so the
+versions installed here decide what actually runs against them. CI only ever
+tests the locked versions. This compares, without network access:
+
+  - the Python running here      with .tool-versions
+  - the interpreter ansible uses with the Python running here (same environment)
+  - installed Python packages    with requirements.txt
+  - the collection Ansible uses  with requirements.yml (the first copy on the
+    search path wins; the ansible package bundles its own, older copies)
+
+Exit 0 when everything matches, 1 on any mismatch, 2 on usage errors.
+Set SKIP_DEPS_CHECK=1 to run anyway (prints a warning).
+
+Usage: check-deps [-h|--help]
+Run via 'make check' / 'make deploy', or directly from the repo root.
+"""
+
+import importlib.metadata
+import json
+import os
+import platform
+import re
+import shutil
+import subprocess
+import sys
+
+FIX_HINT = "Run 'make deps' to install the locked versions."
+SKIP_HINT = (
+    "To run anyway (e.g. testing a new version on purpose), set SKIP_DEPS_CHECK=1:\n"
+    "  SKIP_DEPS_CHECK=1 make deploy"
+)
+
+
+def canonical(name):
+    """PEP 503 normalised package name: 'MarkupSafe' == 'markupsafe'."""
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def parse_tool_versions(text):
+    """Python version from .tool-versions ('python 3.14.8'), or None."""
+    for line in text.splitlines():
+        fields = line.split("#", 1)[0].split()
+        if len(fields) >= 2 and fields[0] == "python":
+            return fields[1]
+    return None
+
+
+def parse_lock(text):
+    """{canonical name: version} from a pip-compile requirements.txt."""
+    pins = {}
+    for line in text.splitlines():
+        m = re.match(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==([^\s;\\]+)", line)
+        if m:
+            pins[canonical(m.group(1))] = m.group(2)
+    return pins
+
+
+def parse_collections(data):
+    """{name: version} from loaded requirements.yml data."""
+    return {c["name"]: str(c["version"]) for c in (data or {}).get("collections", [])}
+
+
+def effective_collections(galaxy_list):
+    """{name: (version, path)} for the copy Ansible will use.
+
+    'ansible-galaxy collection list --format json' maps each search path to the
+    collections in it, in search order; the first path holding a collection wins.
+    """
+    found = {}
+    for path, collections in galaxy_list.items():
+        for name, info in collections.items():
+            found.setdefault(name, (info.get("version"), path))
+    return found
+
+
+def ansible_python(version_output):
+    """Interpreter path from 'ansible --version' ('python version = ... (/path)')."""
+    for line in version_output.splitlines():
+        if line.strip().startswith("python version"):
+            m = re.search(r"\(([^()]+)\)\s*$", line)
+            if m:
+                return m.group(1)
+    return None
+
+
+def find_mismatches(want_python, have_python, lock, installed,
+                    want_collections, have_collections,
+                    ansible_interpreter=None, this_interpreter=None):
+    """Human-readable mismatch lines; empty when everything matches."""
+    problems = []
+    if want_python and want_python != have_python:
+        problems.append(f"python: running {have_python}, .tool-versions wants {want_python}")
+    if (ansible_interpreter and this_interpreter
+            and os.path.realpath(ansible_interpreter) != os.path.realpath(this_interpreter)):
+        problems.append(
+            f"ansible runs on {ansible_interpreter}, not this environment's "
+            f"{this_interpreter}: packages checked here aren't the ones it uses")
+    for name, want in sorted(lock.items()):
+        have = installed.get(name)
+        if have is None:
+            problems.append(f"{name}: not installed, locked {want}")
+        elif have != want:
+            problems.append(f"{name}: installed {have}, locked {want}")
+    for name, want in sorted(want_collections.items()):
+        have = have_collections.get(name)
+        if have is None:
+            problems.append(f"{name}: not installed, pinned {want}")
+        elif have[0] != want:
+            problems.append(f"{name}: using {have[0]} ({have[1]}), pinned {want}")
+    return problems
+
+
+def run(cmd):
+    """stdout of a command, or None if it can't run."""
+    if shutil.which(cmd[0]) is None:
+        return None
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    return result.stdout if result.returncode == 0 else None
+
+
+def main(argv):
+    if len(argv) > 1:
+        if argv[1] in ("-h", "--help", "help"):
+            print(__doc__.strip())
+            return 0
+        print(f"check-deps: unexpected argument {argv[1]!r} (try --help)", file=sys.stderr)
+        return 2
+
+    if os.environ.get("SKIP_DEPS_CHECK") == "1":
+        print("WARNING: SKIP_DEPS_CHECK=1 - not checking local tooling against the lock.\n"
+              "         This run may use Ansible or collection versions CI never tested.",
+              file=sys.stderr)
+        return 0
+
+    try:
+        with open(".tool-versions") as f:
+            want_python = parse_tool_versions(f.read())
+        with open("requirements.txt") as f:
+            lock = parse_lock(f.read())
+        with open("requirements.yml") as f:
+            yml_text = f.read()
+    except FileNotFoundError as e:
+        print(f"check-deps: {e.filename} not found; run from the repo root.", file=sys.stderr)
+        return 2
+
+    problems = []
+    try:
+        import yaml  # PyYAML comes with ansible-core, so it's in the lock
+        want_collections = parse_collections(yaml.safe_load(yml_text))
+    except ImportError:
+        want_collections = {}
+        problems.append("PyYAML is not installed, so collections can't be checked")
+
+    installed = {canonical(d.metadata["Name"]): d.version
+                 for d in importlib.metadata.distributions()}
+
+    galaxy = run(["ansible-galaxy", "collection", "list", "--format", "json"])
+    have_collections = effective_collections(json.loads(galaxy)) if galaxy else {}
+    if galaxy is None and want_collections:
+        problems.append("ansible-galaxy didn't run, so collections can't be checked")
+
+    version_output = run(["ansible", "--version"])
+    ansible_interpreter = ansible_python(version_output) if version_output else None
+
+    problems += find_mismatches(want_python, platform.python_version(), lock, installed,
+                                want_collections, have_collections,
+                                ansible_interpreter, sys.executable)
+    if problems:
+        print("ERROR: local tooling doesn't match the lock:", file=sys.stderr)
+        for p in problems:
+            print(f"  {p}", file=sys.stderr)
+        print(f"\n{FIX_HINT}\n{SKIP_HINT}", file=sys.stderr)
+        return 1
+    print(f"Local tooling matches the lock ({len(lock)} packages, "
+          f"{len(want_collections)} collections).")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
